@@ -53,7 +53,7 @@ package nonoFredBastien
 		 }
 		 public function Perceive(_pokertable:PokerTable) : void {
                                                
-                        expertSystm.ResetFactValues();
+                        expertSystem.ResetFactValues();
                        
                         if (_pokertable.GetValueToCall() > 0) {
                                 //Relancé
