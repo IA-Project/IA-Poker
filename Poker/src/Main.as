@@ -13,6 +13,7 @@
 	import com.novabox.tools.TimeManager;
 	import flash.display.Sprite;
 	import flash.events.Event;
+	import nonoFredBastien.Bruel;
 	
 	/**
 	 * ...
@@ -44,7 +45,7 @@
 			removeEventListener(Event.ADDED_TO_STAGE, init);
 			// entry point
 						
-			var players:Array = [	new HumanPlayer("player 1", PokerTable.PLAYER_INIT_STACK),
+			var players:Array = [	new Bruel("Bruel", PokerTable.PLAYER_INIT_STACK),
 									new PokerPlayer("player 2", PokerTable.PLAYER_INIT_STACK),
 									new PokerPlayer("player 3", PokerTable.PLAYER_INIT_STACK),
 									new PokerPlayer("player 4", PokerTable.PLAYER_INIT_STACK)
