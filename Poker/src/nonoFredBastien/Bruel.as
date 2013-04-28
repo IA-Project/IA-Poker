@@ -45,13 +45,29 @@ package nonoFredBastien
 			expertSystem.ResetFactValues();
 			
 			var probaGain = calculproba(GetCard(0), GetCard(1), _pokerTable.GetBoard(), _pokerTable.GetActivePlayersCount());
-			var probaGainPotentiel = calculprobapotentiel(GetCard(0), GetCard(1), _pokerTable.GetBoard(), _pokerTable.GetActivePlayersCount());
-			var esperanceGainNow = esperance(probaGain, _pokerTable);
-			var esperanceGainPotentiel = esperance(probaGainPotentiel, _pokerTable);
-			trace("****************************************** ProbaGain :" + probaGain);
-			trace("****************************************** ProbaGain Potentiel:" + probaGainPotentiel);
-			trace("****************************************** Espérance :" + esperanceGainNow);
-			trace("****************************************** Espérance Potentiel:" + esperanceGainPotentiel);
+			trace("********************** ProbaGain :" + probaGain);
+			
+			var esperanceGain = esperance(probaGain, _pokerTable);
+			trace("********************** Esperance :" + esperanceGain);
+			
+			if (esperanceGain <= 0) expertSystem.SetFactValue("Trop risqué", true);
+			if (esperanceGain > 0 && esperanceGain <= 2) expertSystem.SetFactValue("Mauvais jeu", true);
+			if (esperanceGain > 2 && esperanceGain <= 35) expertSystem.SetFactValue("Jeu moyen", true);
+			if (esperanceGain > 35 && esperanceGain <= 80) expertSystem.SetFactValue("Bon jeu", true);
+			if (esperanceGain > 80 ) expertSystem.SetFactValue("Gagné d'avance", true);
+			
+			if (_pokerTable.GetBoard().length == 0) {
+				expertSystem.SetFactValue("Premier tour", true);
+			}
+			//if (_pokerTable.GetBoard().length == 4) {
+			//	expertSystem.SetFactValue("Quatrieme tour", true);
+			//}
+			if (_pokerTable.GetAllInPlayersCount() >= 1 && probaGain <= 0.75)
+			{
+				expertSystem.SetFactValue("Trop risqué", true);
+			}
+			
+			/*
 			if (probaGain > 0.95) {
 				expertSystem.SetFactValue("Gagné d'avance", true);
 			}
@@ -74,6 +90,7 @@ package nonoFredBastien
 			{
 				expertSystem.SetFactValue("Trop risqué", true);
 			}
+			*/
 		}
 		
 		private function analyse(_pokerTable:PokerTable) : String
@@ -109,7 +126,7 @@ package nonoFredBastien
 					break;
 			}
 		}
-		// Espérance = Proba * Pot - (1 - proba) * suivre  
+		// Espérance = Proba * Pot - (1 - proba) * valToSuivre  
 		// Espérance positive ok / Négative pas ok
 		private function esperance(proba:Number,  _pokerTable:PokerTable) : Number
 		{
@@ -121,94 +138,70 @@ package nonoFredBastien
 			var deck:Deck = new Deck();
 			deck.RemoveCard(premierecarte);
 			deck.RemoveCard(deuxiemecarte);
-			var NB_TIRAGE = 100;
-			var nbgamewin = 0;
-			var nbgamelose = 0;
+			var NB_TIRAGE = 1000;
 			var nbgameplayed = 0;
-			var valeurmain = 0;
-			var valeurmainadversaire = 0;
-			var probabilitedegagner = 0;
-			if (flop.length == 3)
-			{
-				//a finir en calculant le nombre de partie gagné sur 1000 parties et gérer le calcul de proba avec 7 cartes
-				var jeudujoueur = [premierecarte, deuxiemecarte, flop[0], flop[1], flop[2]];
-				var jeuadversaire;
-				var jeudujoueurpotentiel;
-				var jeuadversairepotentiel;
-				for (nbgameplayed = 0; nbgameplayed<NB_TIRAGE; nbgameplayed++)
-				{
-					deck.Shuffle();
-					valeurmain = PokerTools.GetCardSetValue(jeudujoueur);
-					jeuadversaire = [deck.GetCard(0), deck.GetCard(1), flop[0], flop[1], flop[2]];
-					valeurmainadversaire = PokerTools.GetCardSetValue(jeuadversaire);
-					trace("Moi:" + valeurmain + " - Lui:" + valeurmainadversaire);					
-					// Le plus petit c'est le meilleur. Le Zéro c'est Null par contre
-					if (valeurmain == 0 || valeurmain > valeurmainadversaire)
-						nbgamelose++;
-					else
-						nbgamewin++;
-				}
-			}
-			
-/*			if (flop.length == 5)
-			{
-				//a finir en calculant le nombre de partie gagné sur 1000 parties et gérer le calcul de proba avec 7 cartes
-				var jeudujoueur = [premierecarte, deuxiemecarte, flop[0], flop[1], flop[2], flop[3], flop[4]];
-				{
-					deck.Shuffle();
-					valeurmain = PokerTools.GetCardSetValue(jeudujoueur);
-					jeuadversaire = [deck.GetCard(0), deck.GetCard(1), flop[0], flop[1], flop[2], flop[3], flop[4]];
-					valeurmainadversaire = PokerTools.GetCardSetValue(jeuadversaire);
-					if (valeurmain < valeurmainadversaire)
-						nbgamelose++;
-					else
-						nbgamewin++;
-				}
-			}
-*/			
-			probabilitedegagner 		 = nbgamewin / NB_TIRAGE;
-			var probamoyenne = 1 / nbjoueursactifs;
-			trace("probabilite de gagner maintenant : " + probabilitedegagner);
-			return probabilitedegagner;
-		}
-		
-		private function calculprobapotentiel(premierecarte:PlayingCard, deuxiemecarte:PlayingCard, flop:Array, nbjoueursactifs:int) : Number
-		{
-			var deck:Deck = new Deck();
-			deck.RemoveCard(premierecarte);
-			deck.RemoveCard(deuxiemecarte);
-			var NB_TIRAGE = 100;
-			var nbgameplayed = 0;
+			var valeurmain;
+			var valeurmainadversaire;
 			var valeurmainpotentiel = 0;
 			var valeurmainadversairepotentiel = 0;
 			var nbgamelosepotentiel = 0;
 			var nbgamewinpotentiel = 0;
 			var probabilitedegagnerpotentiel = 0;
-			if (flop.length == 3)
-			{
-				//a finir en calculant le nombre de partie gagné sur 1000 parties et gérer le calcul de proba avec 7 cartes
-				var jeudujoueurpotentiel;
-				var jeuadversairepotentiel;
-				for (nbgameplayed = 0; nbgameplayed<NB_TIRAGE; nbgameplayed++)
-				{
-					deck.Shuffle();
-					jeudujoueurpotentiel = [premierecarte, deuxiemecarte, flop[0], flop[1], flop[2], deck.GetCard(2), deck.GetCard(3)];	
-					valeurmainpotentiel = PokerTools.GetCardSetValue(jeudujoueurpotentiel);
-					jeuadversairepotentiel = [deck.GetCard(0), deck.GetCard(1), flop[0], flop[1], flop[2], deck.GetCard(2), deck.GetCard(3)];
-					valeurmainadversairepotentiel = PokerTools.GetCardSetValue(jeuadversairepotentiel);
-					trace("MoiPotentiel:" + valeurmainpotentiel + " - LuiPotentiel:" + valeurmainadversairepotentiel);
-					
-					if (valeurmainpotentiel == 0 || valeurmainpotentiel > valeurmainadversairepotentiel)
-						nbgamelosepotentiel++;
-					else
-						nbgamewinpotentiel++;
-				}
-			}
+			var nbgamelose = 0;
+			var nbgamewin = 0;
+			var probabilitedegagner = 0;
 			
+			var jeudujoueur;
+			var jeuadversaire;
+			var jeudujoueurpotentiel;
+			var jeuadversairepotentiel;
+			for (nbgameplayed = 0; nbgameplayed<NB_TIRAGE; nbgameplayed++)
+			{
+				deck.Shuffle();
+				if (flop.length == 3) {
+					jeudujoueur 	= [premierecarte, deuxiemecarte, flop[0], flop[1], flop[2]];
+					jeuadversaire	= [deck.GetCard(0), deck.GetCard(1), flop[0], flop[1], flop[2]];
+					jeudujoueurpotentiel 	= [premierecarte, deuxiemecarte, flop[0], flop[1], flop[2], deck.GetCard(2), deck.GetCard(3)];	
+					jeuadversairepotentiel 	= [deck.GetCard(0), deck.GetCard(1), flop[0], flop[1], flop[2], deck.GetCard(2), deck.GetCard(3)];
+				}
+				if (flop.length == 4) {
+					jeudujoueur 	= [premierecarte, deuxiemecarte, flop[0], flop[1], flop[2]]; // A completer
+					jeuadversaire 	= [deck.GetCard(0), deck.GetCard(1), flop[0], flop[1], flop[2]];// A completer
+					jeudujoueurpotentiel 	= [premierecarte, deuxiemecarte, flop[0], flop[1], flop[2], flop[3], deck.GetCard(2)];
+					jeuadversairepotentiel 	= [deck.GetCard(0), deck.GetCard(1), flop[0], flop[1], flop[2], flop[3], deck.GetCard(2)];
+				}
+				if (flop.length == 5) {
+					jeudujoueur 	= [premierecarte, deuxiemecarte, flop[0], flop[1], flop[2], flop[3], flop[4]];
+					jeuadversaire 	= [deck.GetCard(0), deck.GetCard(1), flop[0], flop[1], flop[2], flop[3], flop[4]];
+					jeudujoueurpotentiel 	= [premierecarte, deuxiemecarte, flop[0], flop[1], flop[2], flop[3], flop[4]];
+					jeuadversairepotentiel 	= [deck.GetCard(0), deck.GetCard(1), flop[0], flop[1], flop[2], flop[3], flop[4]];
+				}
+				else {
+					jeudujoueur 	= [premierecarte, deuxiemecarte, deck.GetCard(2), deck.GetCard(3), deck.GetCard(4), deck.GetCard(5), deck.GetCard(6)];
+					jeuadversaire 	= [deck.GetCard(0), deck.GetCard(1), deck.GetCard(2), deck.GetCard(3), deck.GetCard(4), deck.GetCard(5), deck.GetCard(6)];
+					jeudujoueurpotentiel 	= [premierecarte, deuxiemecarte, deck.GetCard(2), deck.GetCard(3), deck.GetCard(4), deck.GetCard(5), deck.GetCard(6)];
+					jeuadversairepotentiel 	= [deck.GetCard(0), deck.GetCard(1), deck.GetCard(2), deck.GetCard(3), deck.GetCard(4), deck.GetCard(5), deck.GetCard(6)];
+					}
+					
+				valeurmain 				= PokerTools.GetCardSetValue(jeudujoueur);
+				valeurmainadversaire 	= PokerTools.GetCardSetValue(jeuadversaire);
+				
+				valeurmainpotentiel 			= PokerTools.GetCardSetValue(jeudujoueurpotentiel);
+				valeurmainadversairepotentiel 	= PokerTools.GetCardSetValue(jeuadversairepotentiel);
+				//trace("MoiPotentiel:" + valeurmainpotentiel + " - LuiPotentiel:" + valeurmainadversairepotentiel);
+				
+				if (valeurmain == 0 || valeurmain > valeurmainadversaire) nbgamelose++;
+				else nbgamewin++;
+				
+				if (valeurmainpotentiel == 0 || valeurmainpotentiel > valeurmainadversairepotentiel) nbgamelosepotentiel++;
+				else nbgamewinpotentiel++;
+			}
+			trace("Taille du Flop "+flop.length);
 			probabilitedegagnerpotentiel = nbgamewinpotentiel / NB_TIRAGE;
-			var probamoyenne = 1 / nbjoueursactifs;
-			trace("probabilite de gagner potentiel	: " + probabilitedegagnerpotentiel);
-			return probabilitedegagnerpotentiel;
+			probabilitedegagner = nbgamewin / NB_TIRAGE;
+			var moyenne = 1 / nbjoueursactifs;
+			if (probabilitedegagner >= moyenne) return probabilitedegagner;
+			return probabilitedegagnerpotentiel;			
 		}
 		
 	}
