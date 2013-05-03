@@ -30,8 +30,6 @@ package nonoFredBastien
 		private function initSystem() : void
 		{
 			expertSystem = new ExpertSystem();
-			expertSystem.AddRule(["Premier tour"], "Suivre");
-			expertSystem.AddRule(["Quatrieme tour"], "Suivre");
 			expertSystem.AddRule(["Gagné d'avance"], "All-In");
 			expertSystem.AddRule(["Bon jeu"], "Relancer");
 			expertSystem.AddRule(["Bon jeu final"], "RelancerFinal");
@@ -52,52 +50,55 @@ package nonoFredBastien
 			var esperanceGain = esperance(probaGain, _pokerTable);
 			trace("********************** Esperance :" + esperanceGain);
 			
-			if (_pokerTable.GetActivePlayersCount() == 2) {
-				if (esperanceGain <= 0) expertSystem.SetFactValue("Trop risqué", true);
-				if (esperanceGain > 0 && esperanceGain <= 2) expertSystem.SetFactValue("Mauvais jeu", true);
-				if (esperanceGain > 2 && esperanceGain <= 25) expertSystem.SetFactValue("Jeu moyen", true);
-				if (esperanceGain > 25 && esperanceGain <= 65) expertSystem.SetFactValue("Bon jeu", true);
-				if (esperanceGain > 65 ) expertSystem.SetFactValue("Gagné d'avance", true);
-				
-				if (_pokerTable.IsRiverDealt && probaGain < 0.15) expertSystem.SetFactValue("Trop risqué", true);
-							
-				if ( _pokerTable.GetDealer().GetName() == this.GetName()) {
-					if (Math.random() <= 0.1) expertSystem.SetFactValue("Bluff final", true);
-				}
-				
+			if (_pokerTable.GetActivePlayersCount() == 2) {				
 				if (_pokerTable.GetBoard().length == 0) {
 					if (probaGain > 0.6) expertSystem.SetFactValue("Bon jeu", true);
 					if (probaGain >= 0.5 && probaGain <= 0.6)
 					{
-						if (_pokerTable.GetValueToCall() < GetStackValue() * 0.20) expertSystem.SetFactValue("Premier tour", true);
+						if (_pokerTable.GetValueToCall() < GetStackValue() * 0.20) expertSystem.SetFactValue("Jeu moyen", true);
 						else expertSystem.SetFactValue("Trop risqué", true);
 					}
 					else expertSystem.SetFactValue("Trop risqué", true);
 				}
+				else {
+					if (esperanceGain <= 0) expertSystem.SetFactValue("Trop risqué", true);
+					if (esperanceGain > 0 && esperanceGain <= 0.02 * GetStackValue()) expertSystem.SetFactValue("Mauvais jeu", true);
+					if (esperanceGain > 0.02 * GetStackValue() && esperanceGain <= 0.25 * GetStackValue()) expertSystem.SetFactValue("Jeu moyen", true);
+					if (esperanceGain > 0.25 * GetStackValue() && esperanceGain <= 0.65 * GetStackValue()) expertSystem.SetFactValue("Bon jeu", true);
+					if (esperanceGain > 0.65 * GetStackValue() && esperanceGain <= 0.80 * GetStackValue()) expertSystem.SetFactValue("Bon jeu Final", true);
+					if (esperanceGain > 0.80 * GetStackValue() ) expertSystem.SetFactValue("Gagné d'avance", true);
+					
+					if (_pokerTable.IsRiverDealt && probaGain < 0.15) expertSystem.SetFactValue("Trop risqué", true);
+								
+					if ( _pokerTable.GetDealer().GetName() == this.GetName()) {
+						if (Math.random() <= 0.1) expertSystem.SetFactValue("Bluff final", true);
+					}
+				}
 			}
 			
-			else{
-				if (esperanceGain <= 0) expertSystem.SetFactValue("Trop risqué", true);
-				if (esperanceGain > 0 && esperanceGain <= 2) expertSystem.SetFactValue("Mauvais jeu", true);
-				if (esperanceGain > 2 && esperanceGain <= 35) expertSystem.SetFactValue("Jeu moyen", true);
-				if (esperanceGain > 35 && esperanceGain <= 80) expertSystem.SetFactValue("Bon jeu", true);
-				if (esperanceGain > 80 && esperanceGain <= 100) expertSystem.SetFactValue("Bon jeu Final", true);
-				if (esperanceGain > 100 ) expertSystem.SetFactValue("Gagné d'avance", true);
-				
-				if (_pokerTable.IsRiverDealt && probaGain < 0.2) expertSystem.SetFactValue("Trop risqué", true);
-							
-				if ( _pokerTable.GetDealer().GetName() == this.GetName()) {
-					if (Math.random() <= 0.05) expertSystem.SetFactValue("Bluff", true);
-				}
-				
+			else{			
 				if (_pokerTable.GetBoard().length == 0) {
 					if (probaGain > 0.7) expertSystem.SetFactValue("Bon jeu", true);
 					if (probaGain >= 0.6 && probaGain <= 0.7)
 					{
-						if (_pokerTable.GetValueToCall() < GetStackValue() * 0.10) expertSystem.SetFactValue("Premier tour", true);
+						if (_pokerTable.GetValueToCall() < GetStackValue() * 0.10) expertSystem.SetFactValue("Jeu moyen", true);
 						else expertSystem.SetFactValue("Trop risqué", true);
 					}
 					else expertSystem.SetFactValue("Trop risqué", true);
+				}
+				else {
+					if (esperanceGain <= 0) expertSystem.SetFactValue("Trop risqué", true);
+					if (esperanceGain > 0 && esperanceGain <= 0.02 * GetStackValue()) expertSystem.SetFactValue("Mauvais jeu", true);
+					if (esperanceGain > 0.02 * GetStackValue() && esperanceGain <= 0.35 * GetStackValue()) expertSystem.SetFactValue("Jeu moyen", true);
+					if (esperanceGain > 0.35 * GetStackValue() && esperanceGain <= 0.80 * GetStackValue()) expertSystem.SetFactValue("Bon jeu", true);
+					if (esperanceGain > 0.80 * GetStackValue() && esperanceGain <= 1 * GetStackValue()) expertSystem.SetFactValue("Bon jeu Final", true);
+					if (esperanceGain > 1 * GetStackValue() ) expertSystem.SetFactValue("Gagné d'avance", true);
+					
+					if (_pokerTable.IsRiverDealt && probaGain < 0.2) expertSystem.SetFactValue("Trop risqué", true);
+								
+					if ( _pokerTable.GetDealer().GetName() == this.GetName()) {
+						if (Math.random() <= 0.05) expertSystem.SetFactValue("Bluff", true);
+					}
 				}
 			}
 		}
@@ -186,7 +187,7 @@ package nonoFredBastien
 				if (valeurmainpotentiel == 0 || valeurmainpotentiel > valeurmainadversairepotentiel) nbgamelosepotentiel++;
 				else nbgamewinpotentiel++;
 			}
-			trace("****************** Taille du Flop "+flop.length);
+			trace("***************** Taille du Flop "+flop.length);
 			probabilitedegagnerpotentiel = nbgamewinpotentiel / NB_TIRAGE;
 			return probabilitedegagnerpotentiel;			
 		}
