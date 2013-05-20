@@ -43,66 +43,47 @@ package nonoFredBastien
 		{
 			expertSystem.ResetFactValues();
 			
-			
-			
-			
-			
-			
 			var probaGain = calculproba(GetCard(0), GetCard(1), _pokerTable.GetBoard());
 			trace("********************** ProbaGain :" + probaGain);
 			
 			var esperanceGain = esperance(probaGain, _pokerTable);
 			trace("********************** Esperance :" + esperanceGain);
 			
-			if (_pokerTable.GetActivePlayersCount() == 2)
+			var activePlayers = _pokerTable.GetActivePlayersCount() - 1;
+			var probaGainPreflop = probaPreFlop(GetCard(0), GetCard(1), _pokerTable);
+			trace("********************** probaGainPreflop :" + probaGainPreflop);
+			
+			var probaAdverse = (100 - probaGainPreflop) / activePlayers;
+			trace ("********************** probaGainAdverse :" + probaAdverse);
+			trace ("active players :" + activePlayers);
+			
+			var probaDiff = probaGainPreflop - probaAdverse;
+			trace ("********************** probaDiff :" + probaDiff);
+					
+			//Préflop
+			if (_pokerTable.GetBoard().length == 0)
 			{
-				
-				if (_pokerTable.GetBoard().length == 0)
+				if (probaDiff >= 20)
+					expertSystem.SetFactValue("Bon jeu final", true);
+					
+				if (probaDiff >= 16 && probaDiff < 20)
+					expertSystem.SetFactValue("Bon jeu", true);
+				if (probaDiff >= 0 && probaDiff< 16)
 				{
-					var activePlayers = _pokerTable.GetActivePlayersCount() - 1;
-					var probaGainPreflop = probaPreFlop(GetCard(0), GetCard(1), _pokerTable);
-					trace("********************** probaGainPreflop :" + probaGainPreflop);
-					var probaAdverse = (100 - probaGainPreflop) / activePlayers;
-					trace ("********************** probaGainAdverse :" + probaAdverse);
-					trace ("active players :" + activePlayers);
-					var probaDiff = probaGainPreflop - probaAdverse;
-					trace ("********************** probaDiff :" + probaDiff);
-					
-					
-					if (probaDiff >= 20)
-						expertSystem.SetFactValue("Bon jeu final", true);
-					
-					if (probaDiff >= 16 && probaDiff < 20)
-						expertSystem.SetFactValue("Bon jeu", true);
-					if (probaDiff >= 0 && probaDiff< 16)
-					{
-						if (_pokerTable.GetValueToCall() < GetStackValue() * 0.20)
-							expertSystem.SetFactValue("Jeu moyen", true);
-						else
-							expertSystem.SetFactValue("Trop risqué", true);
-					}
+					if (_pokerTable.GetValueToCall() < GetStackValue() * 0.20)
+						expertSystem.SetFactValue("Jeu moyen", true);
 					else
 						expertSystem.SetFactValue("Trop risqué", true);
-					
-					
-					/*
-					if (probaGain > 0.6)
-						expertSystem.SetFactValue("Bon jeu", true);
-						
-					
-					if (probaGain >= 0.5 && probaGain <= 0.6)
-					{
-						if (_pokerTable.GetValueToCall() < GetStackValue() * 0.20)
-							expertSystem.SetFactValue("Jeu moyen", true);
-						else
-							expertSystem.SetFactValue("Trop risqué", true);
-					}
-					else
-						expertSystem.SetFactValue("Trop risqué", true);
-						
-					*/
 				}
 				else
+					expertSystem.SetFactValue("Trop risqué", true);
+			}
+			
+			//Post Flop
+			else
+			{
+				//En Final	
+				if (_pokerTable.GetActivePlayersCount() == 2)
 				{
 					if (esperanceGain <= 0)
 						expertSystem.SetFactValue("Trop risqué", true);
@@ -126,55 +107,8 @@ package nonoFredBastien
 							expertSystem.SetFactValue("Bluff final", true);
 					}
 				}
-			}
-			
-			else
-			{
-				if (_pokerTable.GetBoard().length == 0)
-				{
-					var activePlayers = _pokerTable.GetActivePlayersCount() - 1;
-					var probaGainPreflop = probaPreFlop(GetCard(0), GetCard(1), _pokerTable);
-					trace("********************** probaGainPreflop :" + probaGainPreflop);
-					var probaAdverse = (100 - probaGainPreflop) / activePlayers;
-					trace ("********************** probaGainAdverse :" + probaAdverse);
-					trace ("active players :" + activePlayers);
-					var probaDiff = probaGainPreflop - probaAdverse;
-					trace ("********************** probaDiff :" + probaDiff);
-					
-					
-					if (probaDiff >= 20)
-						expertSystem.SetFactValue("Bon jeu final", true);
-					if (probaDiff >= 16 && probaDiff < 20)
-						expertSystem.SetFactValue("Bon jeu", true);
-					if (probaDiff >= 0 && probaDiff < 16)
-					{
-						if (_pokerTable.GetValueToCall() < GetStackValue() * 0.20)
-							expertSystem.SetFactValue("Jeu moyen", true);
-					
-						else
-							expertSystem.SetFactValue("Trop risqué", true);
-					}
-					else
-						expertSystem.SetFactValue("Trop risqué", true);
-					
-					
-					
-					/*
-					if (probaGain > 0.7)
-						expertSystem.SetFactValue("Bon jeu", true);
-					if (probaGain >= 0.6 && probaGain <= 0.7)
-					{
-						if (_pokerTable.GetValueToCall() < GetStackValue() * 0.10)
-							expertSystem.SetFactValue("Jeu moyen", true);
-						else
-							expertSystem.SetFactValue("Trop risqué", true);
-					}
-					else
-						expertSystem.SetFactValue("Trop risqué", true);
-					*/	
-					
-					
-				}
+				
+				//En Jeu Classique
 				else
 				{
 					if (esperanceGain <= 0)
@@ -189,7 +123,7 @@ package nonoFredBastien
 						expertSystem.SetFactValue("Bon jeu Final", true);
 					if (esperanceGain > 1 * GetStackValue())
 						expertSystem.SetFactValue("Gagné d'avance", true);
-					
+						
 					if (_pokerTable.IsRiverDealt && probaGain < 0.2)
 						expertSystem.SetFactValue("Trop risqué", true);
 					
@@ -436,7 +370,7 @@ package nonoFredBastien
 			tableauProbaSuited[0][11] = [55.43, 37.23, 28.38, 23.31, 20.05, 17.75, 16.01, 14.64, 13.54];
 			tableauProbaSuited[0][10] = [52.58, 34.81, 26.42, 21.66, 18.59, 16.42, 14.82, 13.55, 12.54];
 			
-//pas couleur
+			//pas couleur
 			tableauProba[12][12] = [85.54, 73.89, 64.35, 56.43, 49.77, 44.13, 39.32, 35.21, 31.68];
 			tableauProba[11][12] = [66.24, 49.4, 39.83, 33.65, 29.21, 25.77, 22.96, 20.6, 18.59];
 			tableauProba[11][11] = [82.68, 69.24, 58.63, 50.18, 43.36, 37.83, 33.3, 29.58, 26.49];
@@ -538,10 +472,7 @@ package nonoFredBastien
 				probaPreFlop = tableauProba[heightFirstCard][heightSecondCard][nombreJoueurs];
 			}
 			
-			
-
 			return probaPreFlop;
-		
 		}
 	}
 
